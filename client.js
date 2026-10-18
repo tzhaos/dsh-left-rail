@@ -35,7 +35,7 @@ window.__ModuleLoader__.load({
     }
 
     const ICONS = {
-      chat: ['M4 4.5h8a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H8L4 14v-2.5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2Z', 'M5.5 7.5h5M5.5 9.5h3'],
+      chat: ['M2.5 7.2 8 2.8l5.5 4.4V13a1 1 0 0 1-1 1H9.5v-3.4h-3V14H3.5a1 1 0 0 1-1-1Z'],
       automation: ['M8 3.2a4.8 4.8 0 1 1-3.4 1.4', 'M3 4v3h3', 'M8 5.5V8l1.8 1.1'],
       plugins: ['M6 3.5h4v2.2a1.3 1.3 0 1 0 0 2.6v2.2H3.5v-2.2a1.3 1.3 0 1 0 0-2.6V3.5Z', 'M12.5 8.5v4h-2.2a1.3 1.3 0 1 0-2.6 0H3.5v-4'],
       settings: ['M8 6.2a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6Z', 'M8 2.7v1.2M8 12.1v1.2M2.7 8h1.2M12.1 8h1.2M4.25 4.25l.85.85M10.9 10.9l.85.85M11.75 4.25l-.85.85M5.1 10.9l-.85.85'],
@@ -219,7 +219,7 @@ window.__ModuleLoader__.load({
         if (typeof document === 'undefined' || typeof document.createElement !== 'function') return () => {}
         const style = document.createElement('style')
         style.dataset.dshPlugin = 'dsh-left-rail'
-        style.textContent = `html { --dsh-left-rail-width: 46px; }
+        style.textContent = `html { --dsh-left-rail-width: 64px; }
 #root { margin-left: var(--dsh-left-rail-width); width: calc(100% - var(--dsh-left-rail-width)); }
 .dshlr-rail {
   position: fixed;
@@ -231,7 +231,7 @@ window.__ModuleLoader__.load({
   align-items: center;
   gap: 6px;
   box-sizing: border-box;
-  padding: calc(var(--dsh-frame-top-clearance, 0px) + 8px) 6px 10px;
+  padding: calc(var(--dsh-frame-top-clearance, 0px) + 54px) 6px 10px;
   background: var(--dsw-specific-sidebar-fill);
   border-right: .5px solid var(--dsw-alias-border-l3);
   -webkit-app-region: no-drag;

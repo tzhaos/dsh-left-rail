@@ -13,7 +13,8 @@ persistent icon rail and lets the sidebar hold content. This plugin moves those 
 ## Behaviour
 
 - reserves a 46px rail at the far left and shifts `#root` right
-- icon order: Conversations, Plugins, Automation, Settings (the existing DSH order)
+- icon order: Conversations, Plugins, Automation, Settings
+- the conversation entry uses a house/home glyph (the existing DSH order)
 - Conversations returns to the Conversation main panel
 - Plugins/Automation call `ctx.layout.selectPanel()` when the panel is installed
 - unavailable panels are disabled with an explanatory tooltip
