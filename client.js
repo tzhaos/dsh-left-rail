@@ -13,7 +13,7 @@ window.__ModuleLoader__.load({
   id: 'dsh-left-rail',
   factory(require) {
     const React = require('react')
-    const { useEffect, useState } = React
+    const { useEffect, useRef, useState } = React
     const h = React.createElement
 
     const NS = 'leftRail'
@@ -57,6 +57,56 @@ window.__ModuleLoader__.load({
       }, paths.map((d, index) => h('path', { key: index, d })))
     }
 
+    /**
+     * Read the SVG the Host already renders for a panel row, so the rail uses
+     * the product's own icon instead of a hand-drawn substitute.
+     * @param {string} kind - plugins, automation or settings.
+     * @returns {string} serialized SVG markup, or '' when unavailable.
+     */
+    function hostGlyphMarkup(kind) {
+      if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return ''
+      const labels = kind === 'plugins' ? ['插件', 'Plugins']
+        : kind === 'automation' ? ['自动化', 'Automation', 'Scheduled']
+          : ['设置', 'Settings']
+      for (const button of document.querySelectorAll('button[aria-label]')) {
+        if (button.closest?.('[data-dshlr-rail]') !== null && button.closest?.('[data-dshlr-rail]') !== undefined) continue
+        const label = button.getAttribute?.('aria-label') ?? ''
+        if (!labels.some((candidate) => label.startsWith(candidate))) continue
+        const svg = button.querySelector?.('svg')
+        if (svg !== null && svg !== undefined) return svg.outerHTML ?? ''
+      }
+      return ''
+    }
+
+    /**
+     * Prefer the Host's original panel glyph; fall back to the rail drawing
+     * until the sidebar panel list has mounted (or if the panel is absent).
+     * @param {object} props - icon kind and fallback name.
+     * @returns {object} glyph element.
+     */
+    function OriginalIcon({ kind }) {
+      const [markup, setMarkup] = useState('')
+      useEffect(() => {
+        let alive = true
+        const paint = () => {
+          if (!alive) return
+          const next = hostGlyphMarkup(kind)
+          if (next !== '') setMarkup(next)
+        }
+        paint()
+        const observer = typeof MutationObserver === 'function' ? new MutationObserver(paint) : null
+        observer?.observe?.(document.body, { childList: true, subtree: true })
+        const timer = typeof setInterval === 'function' ? setInterval(paint, 800) : null
+        return () => {
+          alive = false
+          observer?.disconnect?.()
+          if (timer !== null) clearInterval(timer)
+        }
+      }, [kind])
+      if (markup !== '') return h('span', { className: 'dshlr-glyph', dangerouslySetInnerHTML: { __html: markup } })
+      return h(Icon, { name: kind })
+    }
+
     /** @returns {Element|null} host settings button. */
     function settingsButton() {
       if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return null
@@ -72,16 +122,19 @@ window.__ModuleLoader__.load({
      * @param {object} props - name, label, active, disabled, onClick and icons.
      * @returns {object} button element.
      */
-    function RailButton({ name, label, active, disabled, onClick }) {
+    function RailButton({ name, label, active, disabled, onClick, onTip }) {
       return h('button', {
         type: 'button',
         className: 'dshlr-button' + (active ? ' dshlr-active' : ''),
         'data-dshlr-button': name,
         'aria-label': label,
-        title: label,
         disabled,
+        onMouseEnter: (event) => onTip?.(event.currentTarget, label),
+        onMouseLeave: () => onTip?.(null),
+        onFocus: (event) => onTip?.(event.currentTarget, label),
+        onBlur: () => onTip?.(null),
         onClick,
-      }, h(Icon, { name }))
+      }, h(OriginalIcon, { kind: name }))
     }
 
     /**
@@ -91,22 +144,43 @@ window.__ModuleLoader__.load({
      */
     function LeftRail({ actions, t }) {
       const [active, setActive] = useState(actions.activePanel())
+      const [tip, setTip] = useState(null)
+      const tipRef = useRef(null)
       useEffect(() => actions.subscribe(setActive), [actions])
+      useEffect(() => {
+        if (tip === null || tipRef.current === null) return undefined
+        const place = () => {
+          const box = tipRef.current?.getBoundingClientRect?.()
+          const anchor = tip.element?.getBoundingClientRect?.()
+          if (box === undefined || anchor === undefined) return
+          const viewportWidth = window.innerWidth ?? document.documentElement.clientWidth
+          const viewportHeight = window.innerHeight ?? document.documentElement.clientHeight
+          const gap = 8
+          const edge = 8
+          let left = anchor.right + gap
+          if (left + box.width > viewportWidth - edge) left = anchor.left - gap - box.width
+          left = Math.max(edge, Math.min(viewportWidth - box.width - edge, left))
+          let top = anchor.top + (anchor.height - box.height) / 2
+          top = Math.max(edge, Math.min(viewportHeight - box.height - edge, top))
+          tipRef.current.style.left = left + 'px'
+          tipRef.current.style.top = top + 'px'
+        }
+        place()
+        window.addEventListener('resize', place)
+        document.addEventListener('scroll', place, true)
+        return () => {
+          window.removeEventListener('resize', place)
+          document.removeEventListener('scroll', place, true)
+        }
+      }, [tip])
+      const showTip = (element, label) => setTip(element === null ? null : { element, label })
       return h('nav', { className: 'dshlr-rail', 'data-dshlr-rail': '' },
         h(RailButton, {
           name: 'chat',
           label: t('rail.chat'),
           active: active === null,
           onClick: () => actions.openChat(),
-        }),
-        h(RailButton, {
-          name: 'automation',
-          label: actions.hasPanel('schedules')
-            ? t('rail.automation')
-            : t('rail.unavailable', { name: t('rail.automation') }),
-          active: active === 'schedules',
-          disabled: !actions.hasPanel('schedules'),
-          onClick: () => actions.openPanel('schedules'),
+          onTip: showTip,
         }),
         h(RailButton, {
           name: 'plugins',
@@ -116,6 +190,17 @@ window.__ModuleLoader__.load({
           active: active === 'plugins',
           disabled: !actions.hasPanel('plugins'),
           onClick: () => actions.openPanel('plugins'),
+          onTip: showTip,
+        }),
+        h(RailButton, {
+          name: 'automation',
+          label: actions.hasPanel('schedules')
+            ? t('rail.automation')
+            : t('rail.unavailable', { name: t('rail.automation') }),
+          active: active === 'schedules',
+          disabled: !actions.hasPanel('schedules'),
+          onClick: () => actions.openPanel('schedules'),
+          onTip: showTip,
         }),
         h('span', { className: 'dshlr-spacer' }),
         h(RailButton, {
@@ -123,7 +208,9 @@ window.__ModuleLoader__.load({
           label: t('rail.settings'),
           active: false,
           onClick: () => actions.openSettings(),
-        }))
+          onTip: showTip,
+        }),
+        tip === null ? null : h('div', { ref: tipRef, className: 'dshlr-tooltip', role: 'tooltip' }, tip.label))
     }
 
     function apply(ctx) {
@@ -180,6 +267,30 @@ window.__ModuleLoader__.load({
   cursor: default;
 }
 .dshlr-spacer { flex: 1; }
+.dshlr-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+.dshlr-glyph svg { display: block; }
+.dshlr-tooltip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 97;
+  max-width: 220px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-bg-base);
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--dsw-elevation-soft);
+}
 `
         document.head?.appendChild?.(style)
         return () => style.remove?.()

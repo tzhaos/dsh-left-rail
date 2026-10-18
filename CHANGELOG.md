@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-10-19
+
+### Changed
+
+- Plugins now precede Automation in the rail, matching DSH's existing panel order.
+- Plugins, Automation and Settings reuse the Host's original rendered SVG glyphs instead of custom
+  drawings.
+- Hover tooltips now flip and clamp at the viewport edges: left-edge icons open to the right, and
+  vertical positions stay inside the window.
+
+### Verified
+
+- `node scripts/check.mjs`: 12 checks green.
+
 ## [1.0.0] - 2026-10-19
 
 ### Added

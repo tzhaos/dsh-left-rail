@@ -13,7 +13,7 @@ DSH 把“插件”和“自动化任务”放在侧边栏顶部的宽文本行�
 ## 行为
 
 - 在窗口最左侧预留 46px 图标栏，`#root` 同步右移
-- 图标：会话、自动化任务、插件、设置
+- 图标顺序：会话、插件、自动化任务、设置（沿用 DSH 现有顺序）
 - 点击会话：回到 Conversation 主面板
 - 点击插件/自动化任务：通过 `ctx.layout.selectPanel()` 切换对应主面板
 - 面板未安装时图标禁用并提示
@@ -59,7 +59,7 @@ node scripts/install-all.mjs
 node scripts/check.mjs
 ```
 
-零依赖测试覆盖清单/patch/locale/icon、四个入口、面板切换、禁用状态、active 高亮和设置按钮，
+零依赖测试覆盖清单/patch/locale/icon、四个入口顺序、面板切换、禁用状态、active 高亮和设置按钮，
 共 12 项检查。
 
 ## 许可证

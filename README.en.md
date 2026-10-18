@@ -13,7 +13,7 @@ persistent icon rail and lets the sidebar hold content. This plugin moves those 
 ## Behaviour
 
 - reserves a 46px rail at the far left and shifts `#root` right
-- icons: Conversations, Automation, Plugins, Settings
+- icon order: Conversations, Plugins, Automation, Settings (the existing DSH order)
 - Conversations returns to the Conversation main panel
 - Plugins/Automation call `ctx.layout.selectPanel()` when the panel is installed
 - unavailable panels are disabled with an explanatory tooltip
@@ -59,8 +59,8 @@ Fully quit and relaunch DSH after installing.
 node scripts/check.mjs
 ```
 
-The zero-dependency suite covers manifest/patch/locale/icon, all four entries, panel switching,
-disabled states, active highlighting and the settings button — 12 checks.
+The zero-dependency suite covers manifest/patch/locale/icon, entry order, panel switching, disabled
+states, active highlighting and the settings button — 12 checks.
 
 ## License
 

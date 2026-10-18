@@ -104,6 +104,7 @@ function scenario(options = {}) {
           element.children = children.length === 1 ? children[0] : children
           return element
         },
+        useRef(initial) { return { current: initial } },
         useState(initial) {
           const index = cursor++
           if (!(index in state)) state[index] = initial
@@ -138,7 +139,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.0.0')
+  assert.equal(manifest.version, '1.1.0')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -187,7 +188,7 @@ await check('icon is a valid accent SVG', () => {
 await check('rail exposes chat, automation, plugins and settings buttons', () => {
   const applied = scenario()
   const labels = buttons(applied.render()).map((button) => button.props['data-dshlr-button'])
-  assert.deepEqual(labels, ['chat', 'automation', 'plugins', 'settings'])
+  assert.deepEqual(labels, ['chat', 'plugins', 'automation', 'settings'])
 })
 
 await check('chat button selects the conversation panel', () => {
@@ -206,7 +207,7 @@ await check('unavailable automation panel is disabled', () => {
   const applied = scenario({ panels: ['plugins'] })
   const automation = buttons(applied.render()).find((button) => button.props['data-dshlr-button'] === 'automation')
   assert.equal(automation.props.disabled, true)
-  assert(automation.props.title.includes('未安装'))
+  assert(automation.props['aria-label'].includes('未安装'))
 })
 
 await check('active panel highlights the matching rail button', () => {
