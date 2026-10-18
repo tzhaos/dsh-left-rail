@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.3] - 2026-10-19
+
+### Fixed
+
+- The brand pill now hugs its logo/text/chevron instead of stretching across the whole brand
+  button (`width: fit-content`, `flex: 0 1 auto`), with tighter 3px/7px padding and a 7px radius.
+- Rail icon buttons are 32px (down from 34px) with an 8px radius, matching the Codex rail scale.
+
+### Verified
+
+- `node scripts/check.mjs`: 27 checks green.
+
 ## [1.9.2] - 2026-10-19
 
 ### Fixed

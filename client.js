@@ -633,14 +633,14 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
 }
 .dshlr-button {
   box-sizing: border-box;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   flex: none;
   display: grid;
   place-items: center;
   padding: 0;
   border: 0;
-  border-radius: 9px;
+  border-radius: 8px;
   background: transparent;
   color: var(--dsw-alias-label-secondary);
   cursor: pointer;
@@ -697,9 +697,12 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
 .dshlr-brand-chevron svg { display: block; }
 .dshlr-brand-pill {
   box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  flex: 0 1 auto !important;
   gap: 4px !important;
-  padding: 4px 8px 4px 7px;
-  border-radius: 8px;
+  padding: 3px 7px 3px 6px;
+  border-radius: 7px;
   background: var(--dsw-alias-interactive-bg-hover);
   transition: background 120ms ease;
 }
