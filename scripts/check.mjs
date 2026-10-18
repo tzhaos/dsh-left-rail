@@ -145,7 +145,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.9.1')
+  assert.equal(manifest.version, '1.9.2')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -282,26 +282,20 @@ await check('native plugin and automation sidebar rows are hidden', () => {
   assert.deepEqual(applied.panelButtons.map((button) => button.hidden), [true, true])
 })
 
+await check('the active item renders a solid filled glyph', () => {
+  assert(clientSource.includes('FILLED_ICONS'))
+  assert(clientSource.includes('function FilledIcon'))
+  assert(clientSource.includes("fill: 'currentColor'"))
+})
+
+await check('active filling does not reuse the broken outline-fill CSS', () => {
+  assert(!clientSource.includes('.dshlr-button.dshlr-active .dshlr-glyph svg'))
+})
+
 await check('active state is indicated by the button style, not a different glyph', () => {
   const tree = scenario({ activePanel: 'plugins' }).render()
   const pluginButton = buttons(tree).find((button) => button.props['data-dshlr-button'] === 'plugins')
   assert(String(pluginButton.props.className).includes('dshlr-active'))
-})
-
-await check('active state fills the same glyph instead of swapping it', () => {
-  assert(clientSource.includes('.dshlr-button.dshlr-active .dshlr-glyph svg'))
-  assert(clientSource.includes('fill: currentColor !important'))
-  assert(!clientSource.includes('FilledIcon'))
-})
-
-await check('active and inactive rail items keep the same glyph', () => {
-  const active = scenario({ activePanel: 'plugins' }).render()
-  const inactive = scenario({ activePanel: null }).render()
-  const glyph = (tree) => {
-    const button = buttons(tree).find((candidate) => candidate.props['data-dshlr-button'] === 'plugins')
-    return findAll(button, (element) => element.type === 'svg').map((element) => element.props)
-  }
-  assert.deepEqual(JSON.parse(JSON.stringify(glyph(active))), JSON.parse(JSON.stringify(glyph(inactive))))
 })
 
 await check('settings menu exposes account, settings, feedback and logout', () => {

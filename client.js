@@ -51,6 +51,35 @@ window.__ModuleLoader__.load({
       settings: ['M8 6.2a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6Z', 'M8 2.7v1.2M8 12.1v1.2M2.7 8h1.2M12.1 8h1.2M4.25 4.25l.85.85M10.9 10.9l.85.85M11.75 4.25l-.85.85M5.1 10.9l-.85.85'],
     }
 
+    /** Solid active glyphs: the same objects as the outline rail icons. */
+    const FILLED_ICONS = {
+      chat: [{ d: 'M2.2 7.1 8 2.4l5.8 4.7V13a1.2 1.2 0 0 1-1.2 1.2H9.6v-3.4H6.4v3.4H3.4A1.2 1.2 0 0 1 2.2 13Z' }],
+      plugins: [
+        { d: 'M8 8C6.6 5.7 7.2 2.8 9.4 1.5c1.8 2 2 5 .7 6.5Z' },
+        { d: 'M8 8C6.6 5.7 7.2 2.8 9.4 1.5c1.8 2 2 5 .7 6.5Z', transform: 'rotate(90 8 8)' },
+        { d: 'M8 8C6.6 5.7 7.2 2.8 9.4 1.5c1.8 2 2 5 .7 6.5Z', transform: 'rotate(180 8 8)' },
+        { d: 'M8 8C6.6 5.7 7.2 2.8 9.4 1.5c1.8 2 2 5 .7 6.5Z', transform: 'rotate(270 8 8)' },
+      ],
+      automation: [{ d: 'M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2Zm-.6 3h1.2v3.2l2.3 1.3-.6 1.1-2.9-1.7Z', fillRule: 'evenodd' }],
+      settings: [{ d: 'M6.7 1.8h2.6l.3 1.6c.4.2.8.4 1.1.7l1.5-.6 1.3 2.3-1.2 1.1c.1.4.1.9 0 1.3l1.2 1.1-1.3 2.3-1.5-.6c-.3.3-.7.5-1.1.7l-.3 1.6H6.7l-.3-1.6a4.8 4.8 0 0 1-1.1-.7l-1.5.6-1.3-2.3 1.2-1.1a5 5 0 0 1 0-1.3L2.5 5.8l1.3-2.3 1.5.6c.3-.3.7-.5 1.1-.7Zm1.3 4.1a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6Z', fillRule: 'evenodd' }],
+    }
+
+    /** Solid active icon; inactive items keep the host outline glyph. */
+    function FilledIcon({ name, size = 18 }) {
+      return h('svg', {
+        viewBox: '0 0 16 16',
+        width: size,
+        height: size,
+        fill: 'currentColor',
+        'aria-hidden': true,
+      }, (FILLED_ICONS[name] ?? FILLED_ICONS.chat).map((part, index) => h('path', {
+        key: index,
+        d: part.d,
+        transform: part.transform,
+        fillRule: part.fillRule,
+      })))
+    }
+
     /** @param {string} name @param {number} size @returns {object} SVG icon. */
     function Icon({ name, size = 18 }) {
       const paths = ICONS[name] ?? ICONS.chat
@@ -113,6 +142,7 @@ window.__ModuleLoader__.load({
           if (timer !== null) clearInterval(timer)
         }
       }, [kind])
+      if (active) return h(FilledIcon, { name: kind })
       if (markup !== '') return h('span', { className: 'dshlr-glyph', dangerouslySetInnerHTML: { __html: markup } })
       return h(Icon, { name: kind })
     }
@@ -626,13 +656,6 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
 .dshlr-button.dshlr-active {
   background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-primary);
-}
-.dshlr-button.dshlr-active .dshlr-glyph svg,
-.dshlr-button.dshlr-active .dshlr-glyph svg * {
-  fill: currentColor !important;
-  stroke: currentColor !important;
-  fill-rule: evenodd;
-  stroke-width: 1.5;
 }
 .dshlr-button:disabled {
   opacity: .35;
