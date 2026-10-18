@@ -145,7 +145,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.7.6')
+  assert.equal(manifest.version, '1.7.7')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -220,6 +220,12 @@ await check('active panel highlights the matching rail button', () => {
   const applied = scenario({ activePanel: 'plugins' })
   const pluginButton = buttons(applied.render()).find((button) => button.props['data-dshlr-button'] === 'plugins')
   assert(String(pluginButton.props.className).includes('dshlr-active'))
+})
+
+await check('the three titlebar controls share one neutral button style', () => {
+  assert(clientSource.includes('width: 14px'))
+  assert(clientSource.includes('background: transparent'))
+  assert(clientSource.includes('.dshlr-toggle:hover'))
 })
 
 await check('the rail owns the top sidebar toggle', () => {

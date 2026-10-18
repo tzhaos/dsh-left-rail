@@ -451,7 +451,7 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
 .dshlr-toggle {
   position: fixed;
   left: 33px;
-  top: 9px;
+  top: 10px;
   z-index: 96;
   box-sizing: border-box;
   width: 14px;
@@ -466,8 +466,9 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
   cursor: pointer;
   -webkit-app-region: no-drag;
 }
-.dshlr-toggle:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+.dshlr-toggle:hover,
+.dshlr-toggle:focus-visible {
+  background: transparent;
   color: var(--dsw-alias-label-primary);
 }
 .dshlr-toggle svg { display: block; }
