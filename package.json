@@ -1,6 +1,6 @@
 {
   "name": "dsh-left-rail",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "private": true,
   "description": "A Codex-style left icon rail for DSH conversations, automation tasks, plugins and settings.",
   "type": "module",

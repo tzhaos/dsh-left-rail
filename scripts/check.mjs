@@ -145,7 +145,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.6.1')
+  assert.equal(manifest.version, '1.7.0')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -193,7 +193,7 @@ await check('icon is a valid accent SVG', () => {
 // Behaviour
 await check('rail exposes chat, automation, plugins and settings buttons', () => {
   const applied = scenario()
-  const labels = buttons(applied.render()).map((button) => button.props['data-dshlr-button'])
+  const labels = buttons(applied.render()).map((button) => button.props['data-dshlr-button']).filter(Boolean)
   assert.deepEqual(labels, ['chat', 'plugins', 'automation', 'settings'])
 })
 
@@ -220,6 +220,11 @@ await check('active panel highlights the matching rail button', () => {
   const applied = scenario({ activePanel: 'plugins' })
   const pluginButton = buttons(applied.render()).find((button) => button.props['data-dshlr-button'] === 'plugins')
   assert(String(pluginButton.props.className).includes('dshlr-active'))
+})
+
+await check('the rail owns the top sidebar toggle', () => {
+  assert(clientSource.includes("'data-dshlr-toggle': ''"))
+  assert(clientSource.includes("button.hasAttribute?.('data-dshlr-toggle') === true"))
 })
 
 await check('native plugin and automation sidebar rows are hidden', () => {

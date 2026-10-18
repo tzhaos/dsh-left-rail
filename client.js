@@ -23,6 +23,7 @@ window.__ModuleLoader__.load({
       'rail.automation': '自动化任务',
       'rail.plugins': '插件',
       'rail.settings': '设置',
+      'rail.toggle': '展开／收起左侧栏',
       'rail.account': '本地账号',
       'rail.feedback': '意见反馈',
       'rail.logout': '退出登录',
@@ -35,6 +36,7 @@ window.__ModuleLoader__.load({
       'rail.automation': 'Automation',
       'rail.plugins': 'Plugins',
       'rail.settings': 'Settings',
+      'rail.toggle': 'Toggle left sidebar',
       'rail.account': 'Local account',
       'rail.feedback': 'Feedback',
       'rail.logout': 'Log out',
@@ -143,6 +145,17 @@ window.__ModuleLoader__.load({
         if (button.closest?.('[data-dshlr-rail]') !== null && button.closest?.('[data-dshlr-rail]') !== undefined) continue
         const label = button.getAttribute?.('aria-label') ?? ''
         if (labels.some((candidate) => label.startsWith(candidate))) button.setAttribute?.('data-dshlr-hidden', '')
+      }
+    }
+
+    /** Hide the host titlebar toggle; the rail renders a matching control after the arrows. */
+    function hideNativeSidebarToggle() {
+      if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return
+      for (const button of document.querySelectorAll('button[aria-label]')) {
+        if (button.hasAttribute?.('data-dshlr-toggle') === true) continue
+        if (button.closest?.('[data-dshlr-rail]') !== null && button.closest?.('[data-dshlr-rail]') !== undefined) continue
+        const label = button.getAttribute?.('aria-label') ?? ''
+        if (/左侧栏|sidebar/i.test(label)) button.setAttribute?.('data-dshlr-hidden', '')
       }
     }
 
@@ -266,7 +279,18 @@ window.__ModuleLoader__.load({
         }
       }, [tip])
       const showTip = (element, label) => setTip(element === null ? null : { element, label })
-      return h('nav', { className: 'dshlr-rail', 'data-dshlr-rail': '' },
+      return h(React.Fragment, null,
+        h('button', {
+          type: 'button',
+          className: 'dshlr-toggle',
+          'data-dshlr-toggle': '',
+          'aria-label': t('rail.toggle'),
+          title: t('rail.toggle'),
+          onClick: () => actions.toggleSidebar(),
+        }, h('svg', { viewBox: '0 0 16 16', width: 16, height: 16, fill: 'none', stroke: 'currentColor', strokeWidth: 1.3, 'aria-hidden': true },
+          h('rect', { x: 2.5, y: 3, width: 11, height: 10, rx: 2 }),
+          h('path', { d: 'M6.5 3v10' }))),
+        h('nav', { className: 'dshlr-rail', 'data-dshlr-rail': '' },
         h(RailButton, {
           name: 'chat',
           label: t('rail.chat'),
@@ -307,7 +331,7 @@ window.__ModuleLoader__.load({
           onTip: showTip,
         }),
         menuOpen ? h(SettingsMenu, { account, actions, t, onClose: () => setMenuOpen(false) }) : null,
-        tip === null ? null : h('div', { ref: tipRef, className: 'dshlr-tooltip', role: 'tooltip' }, tip.label))
+        tip === null ? null : h('div', { ref: tipRef, className: 'dshlr-tooltip', role: 'tooltip' }, tip.label)))
     }
 
     function apply(ctx) {
@@ -364,6 +388,29 @@ window.__ModuleLoader__.load({
   cursor: default;
 }
 .dshlr-spacer { flex: 1; }
+.dshlr-toggle {
+  position: fixed;
+  left: 44px;
+  top: 8px;
+  z-index: 96;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+.dshlr-toggle:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+.dshlr-toggle svg { display: block; }
 .dshlr-glyph {
   display: inline-flex;
   align-items: center;
@@ -449,9 +496,10 @@ window.__ModuleLoader__.load({
 
       ctx.effect(() => {
         hideNativePanelRows()
-        const observer = typeof MutationObserver === 'function' ? new MutationObserver(() => hideNativePanelRows()) : null
+        hideNativeSidebarToggle()
+        const observer = typeof MutationObserver === 'function' ? new MutationObserver(() => { hideNativePanelRows(); hideNativeSidebarToggle() }) : null
         observer?.observe?.(document.body, { childList: true, subtree: true })
-        const timer = typeof setInterval === 'function' ? setInterval(hideNativePanelRows, 800) : null
+        const timer = typeof setInterval === 'function' ? setInterval(() => { hideNativePanelRows(); hideNativeSidebarToggle() }, 800) : null
         return () => {
           observer?.disconnect?.()
           if (timer !== null) clearInterval(timer)
@@ -468,6 +516,7 @@ window.__ModuleLoader__.load({
         },
         hasPanel: (id) => layout.hasMainPanel(id),
         openChat: () => layout.selectPanel(null),
+        toggleSidebar: () => layout.toggleSidebar(),
         openPanel: (id) => {
           if (layout.hasMainPanel(id)) layout.selectPanel(id)
         },
