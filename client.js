@@ -356,6 +356,11 @@ window.__ModuleLoader__.load({
         style.dataset.dshPlugin = 'dsh-left-rail'
         style.textContent = `html { --dsh-left-rail-width: 64px; }
 [data-dshlr-hidden] { display: none !important; }
+/* Keep the viewport grid animated even when the host's transient
+   data-animating token is missed by a plugin-triggered toggle. */
+html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightbar-instant]) {
+  transition: grid-template-columns var(--ds-transition-duration-slow) var(--ds-ease-in-out);
+}
 #root { margin-left: var(--dsh-left-rail-width); width: calc(100% - var(--dsh-left-rail-width)); }
 .dshlr-rail {
   position: fixed;

@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.5] - 2026-10-19
+
+### Fixed
+
+- Keep a grid-template-columns transition on the shell frame for plugin-triggered sidebar toggles, so
+  collapse/expand stays smooth even when the host's transient animation token is missed.
+
+### Verified
+
+- `node scripts/check.mjs`: 20 checks green.
+
 ## [1.7.4] - 2026-10-19
 
 ### Fixed
