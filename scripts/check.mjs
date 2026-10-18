@@ -76,12 +76,18 @@ function scenario(options = {}) {
     getAttribute(name) { return name === 'aria-label' ? '设置' : null },
     click() { settingsClicks.push(true) },
   }
+  const panelButtons = ['插件', '自动化任务'].map((label) => ({
+    hidden: false,
+    getAttribute(name) { return name === 'aria-label' ? label : null },
+    setAttribute(name) { if (name === 'data-dshlr-hidden') this.hidden = true },
+    removeAttribute(name) { if (name === 'data-dshlr-hidden') this.hidden = false },
+  }))
   const document = {
     addEventListener(type, handler) { listeners.set(type, handler) },
     removeEventListener(type, handler) { if (listeners.get(type) === handler) listeners.delete(type) },
     createElement: () => ({ dataset: {}, textContent: '', remove() {} }),
     head: { appendChild() {} },
-    querySelectorAll: (selector) => selector === 'button[aria-label]' ? [settings] : [],
+    querySelectorAll: (selector) => selector === 'button[aria-label]' ? [settings, ...panelButtons] : [],
   }
   const registrations = []
   let locale
@@ -129,7 +135,7 @@ function scenario(options = {}) {
   const t = translator(locale.dicts.zh)
   const injected = registration.options.inject()
   const render = () => registration.component({ ...injected, t })
-  return { selected, setActive, settingsClicks, render, registration, injected }
+  return { selected, setActive, settingsClicks, render, registration, injected, panelButtons }
 }
 
 function buttons(tree) {
@@ -139,7 +145,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.4.0')
+  assert.equal(manifest.version, '1.5.0')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -214,6 +220,11 @@ await check('active panel highlights the matching rail button', () => {
   const applied = scenario({ activePanel: 'plugins' })
   const pluginButton = buttons(applied.render()).find((button) => button.props['data-dshlr-button'] === 'plugins')
   assert(String(pluginButton.props.className).includes('dshlr-active'))
+})
+
+await check('native plugin and automation sidebar rows are hidden', () => {
+  const applied = scenario()
+  assert.deepEqual(applied.panelButtons.map((button) => button.hidden), [true, true])
 })
 
 await check('the active rail item uses a filled glyph', () => {

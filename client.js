@@ -135,6 +135,17 @@ window.__ModuleLoader__.load({
       return h(Icon, { name: kind })
     }
 
+    /** Hide the native sidebar rows whose entry now lives in the rail. */
+    function hideNativePanelRows() {
+      if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return
+      const labels = ['插件', 'Plugins', '自动化', 'Automation', 'Scheduled']
+      for (const button of document.querySelectorAll('button[aria-label]')) {
+        if (button.closest?.('[data-dshlr-rail]') !== null && button.closest?.('[data-dshlr-rail]') !== undefined) continue
+        const label = button.getAttribute?.('aria-label') ?? ''
+        if (labels.some((candidate) => label.startsWith(candidate))) button.setAttribute?.('data-dshlr-hidden', '')
+      }
+    }
+
     /** @returns {Element|null} host settings button. */
     function settingsButton() {
       if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return null
@@ -306,6 +317,7 @@ window.__ModuleLoader__.load({
         const style = document.createElement('style')
         style.dataset.dshPlugin = 'dsh-left-rail'
         style.textContent = `html { --dsh-left-rail-width: 64px; }
+[data-dshlr-hidden] { display: none !important; }
 #root { margin-left: var(--dsh-left-rail-width); width: calc(100% - var(--dsh-left-rail-width)); }
 .dshlr-rail {
   position: fixed;
@@ -435,6 +447,18 @@ window.__ModuleLoader__.load({
         document.head?.appendChild?.(style)
         return () => style.remove?.()
       }, 'left-rail: styles')
+
+      ctx.effect(() => {
+        hideNativePanelRows()
+        const observer = typeof MutationObserver === 'function' ? new MutationObserver(() => hideNativePanelRows()) : null
+        observer?.observe?.(document.body, { childList: true, subtree: true })
+        const timer = typeof setInterval === 'function' ? setInterval(hideNativePanelRows, 800) : null
+        return () => {
+          observer?.disconnect?.()
+          if (timer !== null) clearInterval(timer)
+          for (const button of document.querySelectorAll?.('[data-dshlr-hidden]') ?? []) button.removeAttribute?.('data-dshlr-hidden')
+        }
+      }, 'left-rail: hide native panel rows')
 
       const layout = typeof ctx.get === 'function' ? ctx.get('layout') : undefined
       if (layout?.panelInfo === undefined) return
