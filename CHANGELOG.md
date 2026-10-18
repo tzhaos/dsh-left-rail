@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-10-19
+
+### Fixed
+
+- The DeepSeek brand is no longer a new-session button; clicking the logo is a no-op and the brand
+  stays at its original position.
+- The chevron beside the brand now switches sidebar detail level (Detailed / Compact) instead of
+  listing workspaces. Detailed shows time/status; Compact hides them.
+- The chevron is positioned from the brand identity box without changing the brand flex layout.
+
+### Verified
+
+- `node scripts/check.mjs`: 26 checks green.
+
 ## [1.8.0] - 2026-10-19
 
 ### Added

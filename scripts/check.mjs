@@ -145,7 +145,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.8.0')
+  assert.equal(manifest.version, '1.8.1')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -227,11 +227,16 @@ await check('the brand is never hidden by the collapsed-session rule', () => {
   assert(clientSource.includes("button.removeAttribute?.('data-dshlr-hidden')"))
 })
 
-await check('the brand chevron opens a workspace switcher popover', () => {
-  assert(clientSource.includes('installBrandDropdown'))
-  assert(clientSource.includes('dshlr-brand-arrow'))
-  assert(clientSource.includes('dshlr-workspace-menu'))
-  assert(clientSource.includes('dshlr-workspace-item'))
+await check('the brand chevron switches sidebar detail level', () => {
+  assert(clientSource.includes('切换详细程度'))
+  assert(clientSource.includes("'detailed'"))
+  assert(clientSource.includes("'compact'"))
+  assert(clientSource.includes('dshlr-sidebar-compact'))
+})
+
+await check('the brand no longer starts a new conversation', () => {
+  assert(clientSource.includes('blockBrandClick'))
+  assert(clientSource.includes('stopImmediatePropagation'))
 })
 
 await check('the three titlebar controls share one neutral button style', () => {
