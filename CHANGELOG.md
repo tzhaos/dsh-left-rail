@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.7] - 2026-10-19
+
+### Fixed
+
+- Remove the hover/focus background from the rail-owned sidebar toggle and align it at the same
+  14x18 size and top offset as Back/Forward, so the three titlebar controls read as one even group.
+
+### Verified
+
+- `node scripts/check.mjs`: 22 checks green.
+
 ## [1.7.6] - 2026-10-19
 
 ### Fixed
