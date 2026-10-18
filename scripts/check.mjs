@@ -145,7 +145,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.6.0')
+  assert.equal(manifest.version, '1.6.1')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -225,6 +225,11 @@ await check('active panel highlights the matching rail button', () => {
 await check('native plugin and automation sidebar rows are hidden', () => {
   const applied = scenario()
   assert.deepEqual(applied.panelButtons.map((button) => button.hidden), [true, true])
+})
+
+await check('the active icon path keeps an unconditional hook order', () => {
+  const local = clientSource.slice(clientSource.indexOf('function OriginalIcon'), clientSource.indexOf('function hideNativePanelRows'))
+  assert(local.indexOf('useEffect') < local.indexOf("if (active)"), 'useEffect must run before the active return')
 })
 
 await check('the active rail item uses a filled glyph', () => {

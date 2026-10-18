@@ -61,7 +61,7 @@ node scripts/check.mjs
 ```
 
 零依赖测试覆盖清单/patch/locale/icon、四个入口顺序、面板切换、禁用状态、active 高亮和设置按钮，
-共 15 项检查。
+共 16 项检查。
 
 ## 许可证
 

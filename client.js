@@ -113,7 +113,6 @@ window.__ModuleLoader__.load({
      */
     function OriginalIcon({ kind, active = false }) {
       const [markup, setMarkup] = useState('')
-      if (active) return h(FilledIcon, { name: kind })
       useEffect(() => {
         let alive = true
         const paint = () => {
@@ -131,6 +130,7 @@ window.__ModuleLoader__.load({
           if (timer !== null) clearInterval(timer)
         }
       }, [kind])
+      if (active) return h(FilledIcon, { name: kind })
       if (markup !== '') return h('span', { className: 'dshlr-glyph', dangerouslySetInnerHTML: { __html: markup } })
       return h(Icon, { name: kind })
     }
