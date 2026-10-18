@@ -329,9 +329,8 @@ window.__ModuleLoader__.load({
   align-items: center;
   gap: 6px;
   box-sizing: border-box;
-  padding: calc(var(--dsh-frame-top-clearance, 0px) + 54px) 6px 10px;
+  padding: calc(var(--dsh-frame-top-clearance, 0px) + 96px) 6px 10px;
   background: var(--dsw-specific-sidebar-fill);
-  border-right: .5px solid var(--dsw-alias-border-l3);
   -webkit-app-region: no-drag;
 }
 .dshlr-button {
