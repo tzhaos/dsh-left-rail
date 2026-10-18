@@ -144,6 +144,13 @@ window.__ModuleLoader__.load({
       if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return
       for (const button of document.querySelectorAll('button[aria-label]')) {
         if (button.closest?.('[data-dshlr-rail]') !== null && button.closest?.('[data-dshlr-rail]') !== undefined) continue
+        const className = typeof button.className === 'string' ? button.className : ''
+        // The brand button reuses the "new session" label; never hide the DeepSeek logo.
+        if (/brand/i.test(className)) {
+          button.removeAttribute?.('data-dshlr-hidden')
+          continue
+        }
+        if (!/newSession/i.test(className)) continue
         const label = button.getAttribute?.('aria-label') ?? ''
         if (!/新建会话|New chat|New session/i.test(label)) continue
         let top = 0
@@ -357,8 +364,207 @@ window.__ModuleLoader__.load({
       return true
     }
 
+    /** @param {unknown} value @returns {string|undefined} binding session id. */
+    function sessionIdOfValue(value) {
+      if (typeof value === 'string' && value !== '') return value
+      if (value !== null && typeof value === 'object') {
+        if (typeof value.key === 'string' && value.key !== '') return value.key
+        if (typeof value.sessionId === 'string' && value.sessionId !== '') return value.sessionId
+      }
+      return undefined
+    }
+
+    /** @param {string} path @returns {string} last path segment. */
+    function basenameOf(path) {
+      if (typeof path !== 'string') return ''
+      const trimmed = path.replace(/[\\/]+$/, '')
+      return trimmed.slice(Math.max(trimmed.lastIndexOf('/'), trimmed.lastIndexOf('\\')) + 1) || path
+    }
+
+    /**
+     * Add a Codex-style chevron next to the DeepSeek brand and a workspace
+     * switcher popover. The host brand button stays the new-session control;
+     * only the chevron opens the switcher.
+     * @param {object} ctx - client root context.
+     * @returns {Function} disposer.
+     */
+    function installBrandDropdown(ctx) {
+      if (typeof document === 'undefined') return () => {}
+      let arrow = null
+      let brand = null
+      let originalFlex = ''
+      let menu = null
+      let observer = null
+      let timer = null
+      let onDocumentPointer = null
+      let onDocumentKey = null
+      let onResize = null
+
+      const closeMenu = () => {
+        if (menu !== null) menu.hidden = true
+        arrow?.setAttribute?.('aria-expanded', 'false')
+        document.removeEventListener?.('mousedown', onDocumentPointer, true)
+        document.removeEventListener?.('keydown', onDocumentKey, true)
+        window.removeEventListener?.('resize', onResize)
+      }
+
+      const placeMenu = () => {
+        if (menu === null || arrow === null || menu.hidden) return
+        const anchor = arrow.getBoundingClientRect()
+        const box = menu.getBoundingClientRect()
+        const edge = 8
+        const viewportWidth = window.innerWidth ?? document.documentElement.clientWidth
+        const viewportHeight = window.innerHeight ?? document.documentElement.clientHeight
+        let left = anchor.left
+        if (left + box.width > viewportWidth - edge) left = viewportWidth - box.width - edge
+        left = Math.max(edge, left)
+        let top = anchor.bottom + 6
+        if (top + box.height > viewportHeight - edge) top = anchor.top - box.height - 6
+        top = Math.max(edge, top)
+        menu.style.left = left + 'px'
+        menu.style.top = top + 'px'
+      }
+
+      const fillMenu = () => {
+        if (menu === null) return
+        menu.textContent = ''
+        const uiWorkspace = typeof ctx.get === 'function' ? ctx.get('uiWorkspace') : undefined
+        const snapshot = uiWorkspace?.workspaces?.list?.getSnapshot?.()
+        const items = Array.isArray(snapshot?.items) ? snapshot.items : []
+        const archived = Array.isArray(snapshot?.archivedSessionIds) ? snapshot.archivedSessionIds : []
+        const sessions = uiWorkspace?.sessions?.list?.getSnapshot?.()
+        const uiSession = typeof ctx.get === 'function' ? ctx.get('uiSession') : undefined
+        const currentId = sessionIdOfValue(uiSession?.current?.value)
+        const currentDirectory = sessions?.byId?.[currentId]?.cwd
+        if (items.length === 0) {
+          const empty = document.createElement('div')
+          empty.className = 'dshlr-workspace-empty'
+          empty.textContent = '没有可切换的工作区'
+          menu.appendChild(empty)
+          return
+        }
+        for (const item of items) {
+          const title = typeof item.title === 'string' && item.title !== '' ? item.title : basenameOf(item.path)
+          const path = typeof item.path === 'string' ? item.path : ''
+          const active = typeof currentDirectory === 'string' && currentDirectory !== '' && path !== ''
+            && currentDirectory.replace(/[\\/]+$/, '').toLowerCase() === path.replace(/[\\/]+$/, '').toLowerCase()
+          const row = document.createElement('button')
+          row.type = 'button'
+          row.className = 'dshlr-workspace-item' + (active ? ' dshlr-workspace-item-active' : '')
+          row.setAttribute('role', 'menuitem')
+          const text = document.createElement('span')
+          text.className = 'dshlr-workspace-text'
+          const name = document.createElement('span')
+          name.className = 'dshlr-workspace-name'
+          name.textContent = title
+          const subtitle = document.createElement('span')
+          subtitle.className = 'dshlr-workspace-path'
+          subtitle.textContent = path
+          text.append(name, subtitle)
+          row.append(text)
+          if (active) {
+            const check = document.createElement('span')
+            check.className = 'dshlr-workspace-check'
+            check.textContent = '✓'
+            row.append(check)
+          }
+          row.addEventListener('click', () => {
+            closeMenu()
+            if (active) return
+            if (uiWorkspace === undefined || uiWorkspace === null) return
+            const candidates = Array.isArray(item.sessionIds) ? [...item.sessionIds].reverse() : []
+            const target = candidates.find((id) => !archived.includes(id) && sessions?.byId?.[id] !== undefined)
+            try {
+              if (target !== undefined) uiWorkspace.openSession(target)
+              else uiWorkspace.openWorkspace(item.workspaceId)
+            } catch {
+              // Stale workspace entries are ignored; the menu stays usable.
+            }
+          })
+          menu.appendChild(row)
+        }
+      }
+
+      const openMenu = () => {
+        if (menu === null || arrow === null) return
+        fillMenu()
+        menu.hidden = false
+        arrow.setAttribute('aria-expanded', 'true')
+        placeMenu()
+        onDocumentPointer = (event) => {
+          if (menu.contains(event.target) || arrow.contains(event.target)) return
+          closeMenu()
+        }
+        onDocumentKey = (event) => { if (event.key === 'Escape') closeMenu() }
+        onResize = placeMenu
+        document.addEventListener('mousedown', onDocumentPointer, true)
+        document.addEventListener('keydown', onDocumentKey, true)
+        window.addEventListener?.('resize', onResize)
+      }
+
+      const ensure = () => {
+        const logoRow = document.querySelector?.('[class*="logoRow"]')
+        const nextBrand = logoRow?.querySelector?.('button[class*="brand"]') ?? null
+        if (nextBrand === null) {
+          if (arrow !== null) { closeMenu(); arrow.remove(); arrow = null }
+          if (brand !== null) { brand.style.flex = originalFlex; brand = null }
+          return
+        }
+        if (brand !== nextBrand) {
+          if (brand !== null) brand.style.flex = originalFlex
+          brand = nextBrand
+          originalFlex = brand.style.flex
+          brand.style.flex = '0 0 auto'
+          brand.removeAttribute?.('data-dshlr-hidden')
+        }
+        if (arrow === null) {
+          arrow = document.createElement('button')
+          arrow.type = 'button'
+          arrow.className = 'dshlr-brand-arrow'
+          arrow.setAttribute('aria-label', '切换工作区')
+          arrow.setAttribute('title', '切换工作区')
+          arrow.setAttribute('aria-haspopup', 'menu')
+          arrow.setAttribute('aria-expanded', 'false')
+          arrow.innerHTML = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>'
+          arrow.addEventListener('click', (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            if (menu !== null && !menu.hidden) closeMenu()
+            else openMenu()
+          })
+          if (menu === null) {
+            menu = document.createElement('div')
+            menu.className = 'dshlr-workspace-menu'
+            menu.hidden = true
+            menu.setAttribute('role', 'menu')
+            document.body.appendChild(menu)
+          }
+        }
+        const parent = brand.parentElement
+        if (parent !== null && arrow.parentElement !== parent) parent.insertBefore(arrow, brand.nextSibling)
+        else if (parent !== null && arrow.previousElementSibling !== brand) parent.insertBefore(arrow, brand.nextSibling)
+        const visible = brand.offsetWidth > 0 && (logoRow?.getBoundingClientRect?.().height ?? 0) > 10
+        arrow.hidden = !visible
+        if (!visible) closeMenu()
+      }
+
+      ensure()
+      observer = typeof MutationObserver === 'function' ? new MutationObserver(ensure) : null
+      observer?.observe?.(document.body, { childList: true, subtree: true })
+      timer = typeof setInterval === 'function' ? setInterval(ensure, 800) : null
+      return () => {
+        observer?.disconnect?.()
+        if (timer !== null) clearInterval(timer)
+        closeMenu()
+        arrow?.remove?.()
+        menu?.remove?.()
+        if (brand !== null) brand.style.flex = originalFlex
+      }
+    }
+
     function apply(ctx) {
       ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'left-rail: dictionaries')
+      ctx.effect(() => installBrandDropdown(ctx), 'left-rail: brand workspace switcher')
       ctx.effect(() => {
         if (typeof document === 'undefined' || typeof document.createElement !== 'function') return () => {}
         const style = document.createElement('style')
@@ -459,6 +665,68 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
   color: var(--dsw-alias-label-primary);
 }
 .dshlr-toggle svg { display: block; }
+.dshlr-brand-arrow {
+  box-sizing: border-box;
+  width: 22px;
+  height: 24px;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  margin-left: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+.dshlr-brand-arrow:hover { color: var(--dsw-alias-label-primary); }
+.dshlr-brand-arrow[hidden] { display: none; }
+.dshlr-workspace-menu {
+  position: fixed;
+  z-index: 120;
+  width: 280px;
+  max-height: min(420px, 70vh);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-base);
+  box-shadow: var(--dsw-elevation-soft);
+  color: var(--dsw-alias-label-primary);
+  -webkit-app-region: no-drag;
+}
+.dshlr-workspace-menu[hidden] { display: none; }
+.dshlr-workspace-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dshlr-workspace-item:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.dshlr-workspace-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dshlr-workspace-name { font-size: 14px; line-height: 20px; }
+.dshlr-workspace-path {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--dsw-alias-label-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+}
+.dshlr-workspace-check { flex: none; color: var(--dsw-alias-label-primary); }
+.dshlr-workspace-empty { padding: 12px; color: var(--dsw-alias-label-tertiary); font-size: 13px; }
 .dshlr-glyph {
   display: inline-flex;
   align-items: center;
@@ -524,7 +792,69 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
   cursor: pointer;
 }
 .dshlr-menu-item:hover { background: var(--dsw-alias-interactive-bg-hover); }
-.dshlr-menu-item .dshlr-glyph { width: 16px; height: 16px; color: var(--dsw-alias-label-secondary); }
+.dshlr-menu-item .dshlr-brand-arrow {
+  box-sizing: border-box;
+  width: 22px;
+  height: 24px;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  margin-left: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+}
+.dshlr-brand-arrow:hover { color: var(--dsw-alias-label-primary); }
+.dshlr-brand-arrow[hidden] { display: none; }
+.dshlr-workspace-menu {
+  position: fixed;
+  z-index: 120;
+  width: 280px;
+  max-height: min(420px, 70vh);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-base);
+  box-shadow: var(--dsw-elevation-soft);
+  color: var(--dsw-alias-label-primary);
+  -webkit-app-region: no-drag;
+}
+.dshlr-workspace-menu[hidden] { display: none; }
+.dshlr-workspace-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dshlr-workspace-item:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.dshlr-workspace-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dshlr-workspace-name { font-size: 14px; line-height: 20px; }
+.dshlr-workspace-path {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--dsw-alias-label-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+}
+.dshlr-workspace-check { flex: none; color: var(--dsw-alias-label-primary); }
+.dshlr-workspace-empty { padding: 12px; color: var(--dsw-alias-label-tertiary); font-size: 13px; }
+.dshlr-glyph { width: 16px; height: 16px; color: var(--dsw-alias-label-secondary); }
 .dshlr-tooltip {
   position: fixed;
   left: 0;

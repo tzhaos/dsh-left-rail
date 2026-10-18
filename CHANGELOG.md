@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-10-19
+
+### Added
+
+- Restore the DeepSeek brand logo (the collapsed new-session rule no longer matches the brand button).
+- Add a chevron beside the brand that opens a Codex-style workspace switcher popover; selecting a
+  workspace opens its latest unarchived session, or creates a blank one when it has none.
+
+### Verified
+
+- `node scripts/check.mjs`: 25 checks green.
+
 ## [1.7.9] - 2026-10-19
 
 ### Fixed

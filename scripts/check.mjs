@@ -145,7 +145,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.7.9')
+  assert.equal(manifest.version, '1.8.0')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -220,6 +220,18 @@ await check('active panel highlights the matching rail button', () => {
   const applied = scenario({ activePanel: 'plugins' })
   const pluginButton = buttons(applied.render()).find((button) => button.props['data-dshlr-button'] === 'plugins')
   assert(String(pluginButton.props.className).includes('dshlr-active'))
+})
+
+await check('the brand is never hidden by the collapsed-session rule', () => {
+  assert(clientSource.includes('/brand/i.test(className)'))
+  assert(clientSource.includes("button.removeAttribute?.('data-dshlr-hidden')"))
+})
+
+await check('the brand chevron opens a workspace switcher popover', () => {
+  assert(clientSource.includes('installBrandDropdown'))
+  assert(clientSource.includes('dshlr-brand-arrow'))
+  assert(clientSource.includes('dshlr-workspace-menu'))
+  assert(clientSource.includes('dshlr-workspace-item'))
 })
 
 await check('the three titlebar controls share one neutral button style', () => {
