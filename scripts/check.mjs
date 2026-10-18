@@ -145,7 +145,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.9.0')
+  assert.equal(manifest.version, '1.9.1')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -225,6 +225,12 @@ await check('active panel highlights the matching rail button', () => {
 await check('the brand is never hidden by the collapsed-session rule', () => {
   assert(clientSource.includes('/brand/i.test(className)'))
   assert(clientSource.includes("button.removeAttribute?.('data-dshlr-hidden')"))
+})
+
+await check('the brand and chevron sit in one rounded pill', () => {
+  assert(clientSource.includes('dshlr-brand-pill'))
+  assert(clientSource.includes('border-radius: 8px'))
+  assert(clientSource.includes('padding: 4px 8px 4px 7px'))
 })
 
 await check('the brand and chevron are one workspace-menu button', () => {

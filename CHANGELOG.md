@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] - 2026-10-19
+
+### Changed
+
+- Give the DeepSeek brand + chevron one rounded pill (8px radius, 4px/8px padding) with its own hover
+  surface, matching Codex's combined brand menu affordance.
+
+### Verified
+
+- `node scripts/check.mjs`: 27 checks green.
+
 ## [1.9.0] - 2026-10-19
 
 ### Changed

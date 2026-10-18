@@ -531,7 +531,10 @@ window.__ModuleLoader__.load({
           chevron.setAttribute('aria-hidden', 'true')
           chevron.innerHTML = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4 6 4 4 4-4"/></svg>'
         }
-        if (identity !== null && identity !== undefined && chevron.parentElement !== identity) identity.appendChild(chevron)
+        if (identity !== null && identity !== undefined) {
+          identity.classList?.add?.('dshlr-brand-pill')
+          if (chevron.parentElement !== identity) identity.appendChild(chevron)
+        }
         if (menu === null) {
           menu = document.createElement('div')
           menu.className = 'dshlr-workspace-menu'
@@ -551,6 +554,7 @@ window.__ModuleLoader__.load({
         if (timer !== null) clearInterval(timer)
         closeMenu()
         chevron?.remove?.()
+        brand?.querySelector?.('[class*="brandIdentity"]')?.classList?.remove?.('dshlr-brand-pill')
         menu?.remove?.()
         if (brand !== null) brand.removeEventListener?.('click', activateBrand, true)
       }
@@ -668,6 +672,15 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
   pointer-events: none;
 }
 .dshlr-brand-chevron svg { display: block; }
+.dshlr-brand-pill {
+  box-sizing: border-box;
+  gap: 4px !important;
+  padding: 4px 8px 4px 7px;
+  border-radius: 8px;
+  background: var(--dsw-alias-interactive-bg-hover);
+  transition: background 120ms ease;
+}
+.dshlr-brand-pill:hover { background: var(--dsw-alias-interactive-bg-active); }
 .dshlr-workspace-menu {
   position: fixed;
   z-index: 120;
