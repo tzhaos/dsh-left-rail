@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2026-10-19
+
+### Fixed
+
+- Match the host toggle's actual label (`收起侧边栏`) when hiding it; previously the regex missed it
+  and two toggles were rendered.
+- Place the rail-owned toggle inside the 48px leading titlebar area, before the native App/Edit menu
+  bar, so nothing overlaps the menu.
+
+### Verified
+
+- `node scripts/check.mjs`: 17 checks green.
+
 ## [1.7.0] - 2026-10-19
 
 ### Changed

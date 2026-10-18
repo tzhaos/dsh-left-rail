@@ -155,7 +155,7 @@ window.__ModuleLoader__.load({
         if (button.hasAttribute?.('data-dshlr-toggle') === true) continue
         if (button.closest?.('[data-dshlr-rail]') !== null && button.closest?.('[data-dshlr-rail]') !== undefined) continue
         const label = button.getAttribute?.('aria-label') ?? ''
-        if (/左侧栏|sidebar/i.test(label)) button.setAttribute?.('data-dshlr-hidden', '')
+        if (/左侧栏|侧边栏|sidebar/i.test(label)) button.setAttribute?.('data-dshlr-hidden', '')
       }
     }
 
@@ -287,7 +287,7 @@ window.__ModuleLoader__.load({
           'aria-label': t('rail.toggle'),
           title: t('rail.toggle'),
           onClick: () => actions.toggleSidebar(),
-        }, h('svg', { viewBox: '0 0 16 16', width: 16, height: 16, fill: 'none', stroke: 'currentColor', strokeWidth: 1.3, 'aria-hidden': true },
+        }, h('svg', { viewBox: '0 0 16 16', width: 13, height: 13, fill: 'none', stroke: 'currentColor', strokeWidth: 1.3, 'aria-hidden': true },
           h('rect', { x: 2.5, y: 3, width: 11, height: 10, rx: 2 }),
           h('path', { d: 'M6.5 3v10' }))),
         h('nav', { className: 'dshlr-rail', 'data-dshlr-rail': '' },
@@ -390,12 +390,12 @@ window.__ModuleLoader__.load({
 .dshlr-spacer { flex: 1; }
 .dshlr-toggle {
   position: fixed;
-  left: 44px;
-  top: 8px;
+  left: 34px;
+  top: 9px;
   z-index: 96;
   box-sizing: border-box;
-  width: 20px;
-  height: 20px;
+  width: 13px;
+  height: 18px;
   display: grid;
   place-items: center;
   padding: 0;
