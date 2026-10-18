@@ -348,6 +348,35 @@ window.__ModuleLoader__.load({
         tip === null ? null : h('div', { ref: tipRef, className: 'dshlr-tooltip', role: 'tooltip' }, tip.label)))
     }
 
+    /**
+     * Fade the sidebar's content before/after the native width transition, so
+     * collapsing does not leave a blank slab sliding shut and expanding does
+     * not pop its content in at full opacity.
+     * @param {{toggleSidebar: Function}} layout - layout controller.
+     * @returns {boolean} whether an animation was started.
+     */
+    function toggleSidebarWithContentFade(layout) {
+      const column = document.querySelector?.('[class*="BynINW_sidebarCol"]')
+      if (column === null || column === undefined) {
+        layout.toggleSidebar()
+        return false
+      }
+      if (column.hasAttribute('data-dshlr-collapsing') || column.hasAttribute('data-dshlr-expanding')) return true
+      const collapsed = column.getBoundingClientRect?.().width < 2
+      if (collapsed) {
+        layout.toggleSidebar()
+        column.setAttribute('data-dshlr-expanding', '')
+        setTimeout(() => column.removeAttribute('data-dshlr-expanding'), 240)
+      } else {
+        column.setAttribute('data-dshlr-collapsing', '')
+        setTimeout(() => {
+          layout.toggleSidebar()
+          setTimeout(() => column.removeAttribute('data-dshlr-collapsing'), 260)
+        }, 150)
+      }
+      return true
+    }
+
     function apply(ctx) {
       ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'left-rail: dictionaries')
       ctx.effect(() => {
@@ -356,6 +385,18 @@ window.__ModuleLoader__.load({
         style.dataset.dshPlugin = 'dsh-left-rail'
         style.textContent = `html { --dsh-left-rail-width: 64px; }
 [data-dshlr-hidden] { display: none !important; }
+.BynINW_sidebarCol[data-dshlr-collapsing] > * {
+  opacity: 0 !important;
+  transform: translateX(-10px);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+.BynINW_sidebarCol[data-dshlr-expanding] > * {
+  animation: dshlr-content-in 220ms ease both;
+}
+@keyframes dshlr-content-in {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 /* Keep the viewport grid animated even when the host's transient
    data-animating token is missed by a plugin-triggered toggle. */
 html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightbar-instant]) {
@@ -540,7 +581,7 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
         },
         hasPanel: (id) => layout.hasMainPanel(id),
         openChat: () => layout.selectPanel(null),
-        toggleSidebar: () => layout.toggleSidebar(),
+        toggleSidebar: () => toggleSidebarWithContentFade(layout),
         openPanel: (id) => {
           if (layout.hasMainPanel(id)) layout.selectPanel(id)
         },
