@@ -61,7 +61,7 @@ node scripts/check.mjs
 ```
 
 The zero-dependency suite covers manifest/patch/locale/icon, entry order, panel switching, disabled
-states, active highlighting and the settings button — 17 checks.
+states, active highlighting and the settings button — 18 checks.
 
 ## License
 

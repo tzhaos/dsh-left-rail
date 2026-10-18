@@ -418,7 +418,11 @@ window.__ModuleLoader__.load({
   width: 18px;
   height: 18px;
 }
-.dshlr-glyph svg { display: block; }
+.dshlr-glyph svg {
+  display: block;
+  width: 18px !important;
+  height: 18px !important;
+}
 .dshlr-menu {
   position: fixed;
   left: 72px;

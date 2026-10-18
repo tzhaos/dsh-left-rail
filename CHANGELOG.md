@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.3] - 2026-10-19
+
+### Fixed
+
+- Force cloned host SVG icons to a fixed 18px box. The host panel glyphs change between 16px and 18px
+  when the sidebar expands/collapses; cloning them made the rail icons grow and shrink.
+
+### Verified
+
+- `node scripts/check.mjs`: 18 checks green.
+
 ## [1.7.2] - 2026-10-19
 
 ### Fixed
