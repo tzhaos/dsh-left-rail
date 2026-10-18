@@ -139,7 +139,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.3.0')
+  assert.equal(manifest.version, '1.4.0')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -214,6 +214,17 @@ await check('active panel highlights the matching rail button', () => {
   const applied = scenario({ activePanel: 'plugins' })
   const pluginButton = buttons(applied.render()).find((button) => button.props['data-dshlr-button'] === 'plugins')
   assert(String(pluginButton.props.className).includes('dshlr-active'))
+})
+
+await check('the active rail item uses a filled glyph', () => {
+  const applied = scenario({ activePanel: 'plugins' })
+  const tree = applied.render()
+  const pluginButton = buttons(tree).find((button) => button.props['data-dshlr-button'] === 'plugins')
+  const svg = findAll(pluginButton, (element) => element.type === 'svg')[0]
+  assert.equal(svg.props.fill, 'currentColor')
+  const chatButton = buttons(tree).find((button) => button.props['data-dshlr-button'] === 'chat')
+  const chatSvg = findAll(chatButton, (element) => element.type === 'svg')[0]
+  assert.notEqual(chatSvg.props.fill, 'currentColor')
 })
 
 await check('settings menu exposes account, settings, feedback and logout', () => {
