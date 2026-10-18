@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.2] - 2026-10-19
+
+### Fixed
+
+- Remove the oversized top padding on the icon rail; icons now start directly below the titlebar
+  instead of leaving a large empty gap.
+
+### Verified
+
+- `node scripts/check.mjs`: 17 checks green.
+
 ## [1.7.1] - 2026-10-19
 
 ### Fixed

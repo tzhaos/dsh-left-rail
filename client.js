@@ -353,7 +353,7 @@ window.__ModuleLoader__.load({
   align-items: center;
   gap: 6px;
   box-sizing: border-box;
-  padding: calc(var(--dsh-frame-top-clearance, 0px) + 96px) 6px 10px;
+  padding: calc(var(--dsh-frame-top-clearance, 0px) + 8px) 6px 10px;
   background: var(--dsw-specific-sidebar-fill);
   -webkit-app-region: no-drag;
 }
