@@ -145,7 +145,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.7.7')
+  assert.equal(manifest.version, '1.7.8')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -259,20 +259,20 @@ await check('native plugin and automation sidebar rows are hidden', () => {
   assert.deepEqual(applied.panelButtons.map((button) => button.hidden), [true, true])
 })
 
-await check('the active icon path keeps an unconditional hook order', () => {
-  const local = clientSource.slice(clientSource.indexOf('function OriginalIcon'), clientSource.indexOf('function hideNativePanelRows'))
-  assert(local.indexOf('useEffect') < local.indexOf("if (active)"), 'useEffect must run before the active return')
+await check('active state is indicated by the button style, not a different glyph', () => {
+  const tree = scenario({ activePanel: 'plugins' }).render()
+  const pluginButton = buttons(tree).find((button) => button.props['data-dshlr-button'] === 'plugins')
+  assert(String(pluginButton.props.className).includes('dshlr-active'))
 })
 
-await check('the active rail item uses a filled glyph', () => {
-  const applied = scenario({ activePanel: 'plugins' })
-  const tree = applied.render()
-  const pluginButton = buttons(tree).find((button) => button.props['data-dshlr-button'] === 'plugins')
-  const svg = findAll(pluginButton, (element) => element.type === 'svg')[0]
-  assert.equal(svg.props.fill, 'currentColor')
-  const chatButton = buttons(tree).find((button) => button.props['data-dshlr-button'] === 'chat')
-  const chatSvg = findAll(chatButton, (element) => element.type === 'svg')[0]
-  assert.notEqual(chatSvg.props.fill, 'currentColor')
+await check('active and inactive rail items keep the same glyph', () => {
+  const active = scenario({ activePanel: 'plugins' }).render()
+  const inactive = scenario({ activePanel: null }).render()
+  const glyph = (tree) => {
+    const button = buttons(tree).find((candidate) => candidate.props['data-dshlr-button'] === 'plugins')
+    return findAll(button, (element) => element.type === 'svg').map((element) => element.props)
+  }
+  assert.deepEqual(JSON.parse(JSON.stringify(glyph(active))), JSON.parse(JSON.stringify(glyph(inactive))))
 })
 
 await check('settings menu exposes account, settings, feedback and logout', () => {
