@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-10-19
+
+### Changed
+
+- The DeepSeek logo and its chevron now form one menu button. Clicking either opens a workspace
+  switcher; the brand no longer starts a new conversation.
+- The menu switches conversation/workspace context (which changes answers), not sidebar display
+  options; the temporary detailed/compact display switch is removed.
+
+### Verified
+
+- `node scripts/check.mjs`: 26 checks green.
+
 ## [1.8.1] - 2026-10-19
 
 ### Fixed

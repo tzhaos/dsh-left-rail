@@ -382,50 +382,35 @@ window.__ModuleLoader__.load({
     }
 
     /**
-     * Add a chevron beside the DeepSeek brand. It switches the sidebar detail
-     * level (detailed vs compact); the brand itself is no longer a new-session
-     * control, only a label.
+     * Make the DeepSeek brand a single menu button: the host brand button plus
+     * its inline chevron open a workspace switcher rather than starting a new
+     * session. Workspaces carry different conversation context, so switching
+     * here changes how the assistant answers.
      * @param {object} ctx - client root context.
      * @returns {Function} disposer.
      */
     function installBrandDropdown(ctx) {
       if (typeof document === 'undefined') return () => {}
-      const DETAIL_KEY = 'dshlr.sidebarDetail'
-      let arrow = null
       let menu = null
       let brand = null
+      let chevron = null
       let observer = null
       let timer = null
       let onDocumentPointer = null
       let onDocumentKey = null
       let onResize = null
 
-      const readDetail = () => {
-        try {
-          return localStorage.getItem(DETAIL_KEY) === 'compact' ? 'compact' : 'detailed'
-        } catch {
-          return 'detailed'
-        }
-      }
-      const applyDetail = (value) => {
-        document.documentElement?.classList?.toggle?.('dshlr-sidebar-compact', value === 'compact')
-        try { localStorage.setItem(DETAIL_KEY, value) } catch { /* browser-local only */ }
-        arrow?.setAttribute?.('data-detail', value)
-      }
-      let detail = readDetail()
-      applyDetail(detail)
-
       const closeMenu = () => {
         if (menu !== null) menu.hidden = true
-        arrow?.setAttribute?.('aria-expanded', 'false')
+        brand?.setAttribute?.('aria-expanded', 'false')
         document.removeEventListener?.('mousedown', onDocumentPointer, true)
         document.removeEventListener?.('keydown', onDocumentKey, true)
         window.removeEventListener?.('resize', onResize)
       }
 
       const placeMenu = () => {
-        if (menu === null || arrow === null || menu.hidden) return
-        const anchor = arrow.getBoundingClientRect()
+        if (menu === null || brand === null || menu.hidden) return
+        const anchor = brand.getBoundingClientRect()
         const box = menu.getBoundingClientRect()
         const edge = 8
         const viewportWidth = window.innerWidth ?? document.documentElement.clientWidth
@@ -443,50 +428,72 @@ window.__ModuleLoader__.load({
       const fillMenu = () => {
         if (menu === null) return
         menu.textContent = ''
-        const options = [
-          { value: 'detailed', label: '详细', description: '显示会话时间与状态' },
-          { value: 'compact', label: '简洁', description: '只显示会话标题' },
-        ]
-        for (const option of options) {
+        const uiWorkspace = typeof ctx.get === 'function' ? ctx.get('uiWorkspace') : undefined
+        const snapshot = uiWorkspace?.workspaces?.list?.getSnapshot?.()
+        const items = Array.isArray(snapshot?.items) ? snapshot.items : []
+        const archived = Array.isArray(snapshot?.archivedSessionIds) ? snapshot.archivedSessionIds : []
+        const sessions = uiWorkspace?.sessions?.list?.getSnapshot?.()
+        const uiSession = typeof ctx.get === 'function' ? ctx.get('uiSession') : undefined
+        const currentId = sessionIdOfValue(uiSession?.current?.value)
+        const currentDirectory = sessions?.byId?.[currentId]?.cwd
+        if (items.length === 0) {
+          const empty = document.createElement('div')
+          empty.className = 'dshlr-workspace-empty'
+          empty.textContent = '没有可切换的工作区'
+          menu.appendChild(empty)
+          return
+        }
+        for (const item of items) {
+          const title = typeof item.title === 'string' && item.title !== '' ? item.title : basenameOf(item.path)
+          const path = typeof item.path === 'string' ? item.path : ''
+          const active = typeof currentDirectory === 'string' && currentDirectory !== '' && path !== ''
+            && currentDirectory.replace(/[\\/]+$/, '').toLowerCase() === path.replace(/[\\/]+$/, '').toLowerCase()
           const row = document.createElement('button')
           row.type = 'button'
-          row.className = 'dshlr-workspace-item' + (detail === option.value ? ' dshlr-workspace-item-active' : '')
+          row.className = 'dshlr-workspace-item' + (active ? ' dshlr-workspace-item-active' : '')
           row.setAttribute('role', 'menuitemradio')
-          row.setAttribute('aria-checked', detail === option.value ? 'true' : 'false')
+          row.setAttribute('aria-checked', active ? 'true' : 'false')
           const text = document.createElement('span')
           text.className = 'dshlr-workspace-text'
           const name = document.createElement('span')
           name.className = 'dshlr-workspace-name'
-          name.textContent = option.label
+          name.textContent = title
           const subtitle = document.createElement('span')
           subtitle.className = 'dshlr-workspace-path'
-          subtitle.textContent = option.description
+          subtitle.textContent = path
           text.append(name, subtitle)
           row.append(text)
-          if (detail === option.value) {
+          if (active) {
             const check = document.createElement('span')
             check.className = 'dshlr-workspace-check'
             check.textContent = '✓'
             row.append(check)
           }
           row.addEventListener('click', () => {
-            detail = option.value
-            applyDetail(detail)
             closeMenu()
-            fillMenu()
+            if (active) return
+            if (uiWorkspace === undefined || uiWorkspace === null) return
+            const candidates = Array.isArray(item.sessionIds) ? [...item.sessionIds].reverse() : []
+            const target = candidates.find((id) => !archived.includes(id) && sessions?.byId?.[id] !== undefined)
+            try {
+              if (target !== undefined) uiWorkspace.openSession(target)
+              else uiWorkspace.openWorkspace(item.workspaceId)
+            } catch {
+              // A stale workspace entry is ignored.
+            }
           })
           menu.appendChild(row)
         }
       }
 
       const openMenu = () => {
-        if (menu === null || arrow === null) return
+        if (menu === null || brand === null) return
         fillMenu()
         menu.hidden = false
-        arrow.setAttribute('aria-expanded', 'true')
+        brand.setAttribute('aria-expanded', 'true')
         placeMenu()
         onDocumentPointer = (event) => {
-          if (menu.contains(event.target) || arrow.contains(event.target)) return
+          if (menu.contains(event.target) || brand.contains(event.target)) return
           closeMenu()
         }
         onDocumentKey = (event) => { if (event.key === 'Escape') closeMenu() }
@@ -496,60 +503,41 @@ window.__ModuleLoader__.load({
         window.addEventListener?.('resize', onResize)
       }
 
-      const blockBrandClick = (event) => {
+      const activateBrand = (event) => {
         event.preventDefault()
         event.stopImmediatePropagation()
+        if (menu !== null && !menu.hidden) closeMenu()
+        else openMenu()
       }
 
       const ensure = () => {
         const logoRow = document.querySelector?.('[class*="logoRow"]')
         const nextBrand = logoRow?.querySelector?.('button[class*="brand"]') ?? null
         if (nextBrand === null) {
-          if (arrow !== null) { closeMenu(); arrow.hidden = true }
-          if (brand !== null) { brand.style.cursor = ''; brand = null }
+          if (brand !== null) { closeMenu(); brand = null }
           return
         }
         if (brand !== nextBrand) {
-          if (brand !== null) brand.style.cursor = ''
           brand = nextBrand
-          brand.style.cursor = 'default'
           brand.setAttribute?.('aria-label', 'DeepSeek Harness')
-          brand.setAttribute?.('tabindex', '-1')
-          brand.addEventListener?.('click', blockBrandClick, true)
-        }
-        if (arrow === null) {
-          arrow = document.createElement('button')
-          arrow.type = 'button'
-          arrow.className = 'dshlr-brand-arrow'
-          arrow.setAttribute('aria-label', '切换详细程度')
-          arrow.setAttribute('title', '切换详细程度')
-          arrow.setAttribute('aria-haspopup', 'menu')
-          arrow.setAttribute('aria-expanded', 'false')
-          arrow.innerHTML = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg>'
-          arrow.addEventListener('click', (event) => {
-            event.preventDefault()
-            event.stopPropagation()
-            if (menu !== null && !menu.hidden) closeMenu()
-            else openMenu()
-          })
-          if (menu === null) {
-            menu = document.createElement('div')
-            menu.className = 'dshlr-workspace-menu'
-            menu.hidden = true
-            menu.setAttribute('role', 'menu')
-            document.body.appendChild(menu)
-          }
-          document.body.appendChild(arrow)
+          brand.setAttribute?.('aria-haspopup', 'menu')
+          brand.setAttribute?.('aria-expanded', 'false')
+          brand.addEventListener?.('click', activateBrand, true)
         }
         const identity = brand.querySelector?.('[class*="brandIdentity"]') ?? brand
-        const rect = identity.getBoundingClientRect?.()
-        const visible = rect !== undefined && rect.width > 0 && brand.offsetWidth > 0
-        arrow.hidden = !visible
-        if (visible) {
-          arrow.style.left = (rect.right + 4) + 'px'
-          arrow.style.top = (rect.top + (rect.height - 22) / 2) + 'px'
-        } else {
-          closeMenu()
+        if (chevron === null) {
+          chevron = document.createElement('span')
+          chevron.className = 'dshlr-brand-chevron'
+          chevron.setAttribute('aria-hidden', 'true')
+          chevron.innerHTML = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4 6 4 4 4-4"/></svg>'
+        }
+        if (identity !== null && identity !== undefined && chevron.parentElement !== identity) identity.appendChild(chevron)
+        if (menu === null) {
+          menu = document.createElement('div')
+          menu.className = 'dshlr-workspace-menu'
+          menu.hidden = true
+          menu.setAttribute('role', 'menu')
+          document.body.appendChild(menu)
         }
         if (menu !== null && !menu.hidden) placeMenu()
       }
@@ -562,12 +550,9 @@ window.__ModuleLoader__.load({
         observer?.disconnect?.()
         if (timer !== null) clearInterval(timer)
         closeMenu()
-        arrow?.remove?.()
+        chevron?.remove?.()
         menu?.remove?.()
-        if (brand !== null) {
-          brand.style.cursor = ''
-          brand.removeEventListener?.('click', blockBrandClick, true)
-        }
+        if (brand !== null) brand.removeEventListener?.('click', activateBrand, true)
       }
     }
 
@@ -674,23 +659,15 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
   color: var(--dsw-alias-label-primary);
 }
 .dshlr-toggle svg { display: block; }
-.dshlr-brand-arrow {
-  position: fixed;
-  z-index: 97;
-  box-sizing: border-box;
-  width: 22px;
-  height: 22px;
-  display: inline-grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
+.dshlr-brand-chevron {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  margin-left: 4px;
   color: var(--dsw-alias-label-secondary);
-  cursor: pointer;
+  pointer-events: none;
 }
-.dshlr-brand-arrow:hover { color: var(--dsw-alias-label-primary); }
-.dshlr-brand-arrow[hidden] { display: none; }
+.dshlr-brand-chevron svg { display: block; }
 .dshlr-workspace-menu {
   position: fixed;
   z-index: 120;
@@ -736,8 +713,6 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
 }
 .dshlr-workspace-check { flex: none; color: var(--dsw-alias-label-primary); }
 .dshlr-workspace-empty { padding: 12px; color: var(--dsw-alias-label-tertiary); font-size: 13px; }
-html.dshlr-sidebar-compact .dshss-time,
-html.dshlr-sidebar-compact .dshss-dotWrap { display: none !important; }
 .dshlr-glyph {
   display: inline-flex;
   align-items: center;
@@ -865,8 +840,6 @@ html.dshlr-sidebar-compact .dshss-dotWrap { display: none !important; }
 }
 .dshlr-workspace-check { flex: none; color: var(--dsw-alias-label-primary); }
 .dshlr-workspace-empty { padding: 12px; color: var(--dsw-alias-label-tertiary); font-size: 13px; }
-html.dshlr-sidebar-compact .dshss-time,
-html.dshlr-sidebar-compact .dshss-dotWrap { display: none !important; }
 .dshlr-glyph { width: 16px; height: 16px; color: var(--dsw-alias-label-secondary); }
 .dshlr-tooltip {
   position: fixed;
