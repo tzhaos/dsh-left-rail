@@ -159,6 +159,20 @@ window.__ModuleLoader__.load({
       }
     }
 
+    /** Hide the host new-session button when the collapsed sidebar parks it in the titlebar row. */
+    function hideCollapsedNewSession() {
+      if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return
+      for (const button of document.querySelectorAll('button[aria-label]')) {
+        if (button.closest?.('[data-dshlr-rail]') !== null && button.closest?.('[data-dshlr-rail]') !== undefined) continue
+        const label = button.getAttribute?.('aria-label') ?? ''
+        if (!/新建会话|New chat|New session/i.test(label)) continue
+        let top = 0
+        try { top = button.getBoundingClientRect?.().top ?? 0 } catch { top = 0 }
+        if (top < 60) button.setAttribute?.('data-dshlr-hidden', '')
+        else button.removeAttribute?.('data-dshlr-hidden')
+      }
+    }
+
     /** @returns {Element|null} host settings button. */
     function settingsButton() {
       if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return null
@@ -390,11 +404,11 @@ window.__ModuleLoader__.load({
 .dshlr-spacer { flex: 1; }
 .dshlr-toggle {
   position: fixed;
-  left: 34px;
+  left: 33px;
   top: 9px;
   z-index: 96;
   box-sizing: border-box;
-  width: 13px;
+  width: 14px;
   height: 18px;
   display: grid;
   place-items: center;
@@ -501,9 +515,10 @@ window.__ModuleLoader__.load({
       ctx.effect(() => {
         hideNativePanelRows()
         hideNativeSidebarToggle()
-        const observer = typeof MutationObserver === 'function' ? new MutationObserver(() => { hideNativePanelRows(); hideNativeSidebarToggle() }) : null
+        hideCollapsedNewSession()
+        const observer = typeof MutationObserver === 'function' ? new MutationObserver(() => { hideNativePanelRows(); hideNativeSidebarToggle(); hideCollapsedNewSession() }) : null
         observer?.observe?.(document.body, { childList: true, subtree: true })
-        const timer = typeof setInterval === 'function' ? setInterval(() => { hideNativePanelRows(); hideNativeSidebarToggle() }, 800) : null
+        const timer = typeof setInterval === 'function' ? setInterval(() => { hideNativePanelRows(); hideNativeSidebarToggle(); hideCollapsedNewSession() }, 800) : null
         return () => {
           observer?.disconnect?.()
           if (timer !== null) clearInterval(timer)

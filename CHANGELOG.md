@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.4] - 2026-10-19
+
+### Fixed
+
+- Hide the host new-session button when the collapsed sidebar parks it in the titlebar row, removing
+  the extra circle-plus between the rail toggle and the App menu.
+- Match the rail-owned toggle's width to the 14px Back/Forward controls so the three buttons read as
+  one evenly sized group.
+
+### Verified
+
+- `node scripts/check.mjs`: 19 checks green.
+
 ## [1.7.3] - 2026-10-19
 
 ### Fixed

@@ -145,7 +145,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.7.3')
+  assert.equal(manifest.version, '1.7.4')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -225,6 +225,11 @@ await check('active panel highlights the matching rail button', () => {
 await check('the rail owns the top sidebar toggle', () => {
   assert(clientSource.includes("'data-dshlr-toggle': ''"))
   assert(clientSource.includes("button.hasAttribute?.('data-dshlr-toggle') === true"))
+})
+
+await check('the collapsed new-session titlebar button is hidden', () => {
+  assert(clientSource.includes('hideCollapsedNewSession'))
+  assert(clientSource.includes("top < 60"))
 })
 
 await check('cloned host glyphs keep one fixed size across sidebar states', () => {
