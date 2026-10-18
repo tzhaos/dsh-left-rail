@@ -423,6 +423,13 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
   background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-primary);
 }
+.dshlr-button.dshlr-active .dshlr-glyph svg,
+.dshlr-button.dshlr-active .dshlr-glyph svg * {
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  fill-rule: evenodd;
+  stroke-width: 1.5;
+}
 .dshlr-button:disabled {
   opacity: .35;
   cursor: default;

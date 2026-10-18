@@ -145,7 +145,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.7.8')
+  assert.equal(manifest.version, '1.7.9')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -263,6 +263,12 @@ await check('active state is indicated by the button style, not a different glyp
   const tree = scenario({ activePanel: 'plugins' }).render()
   const pluginButton = buttons(tree).find((button) => button.props['data-dshlr-button'] === 'plugins')
   assert(String(pluginButton.props.className).includes('dshlr-active'))
+})
+
+await check('active state fills the same glyph instead of swapping it', () => {
+  assert(clientSource.includes('.dshlr-button.dshlr-active .dshlr-glyph svg'))
+  assert(clientSource.includes('fill: currentColor !important'))
+  assert(!clientSource.includes('FilledIcon'))
 })
 
 await check('active and inactive rail items keep the same glyph', () => {
