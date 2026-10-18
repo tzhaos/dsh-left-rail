@@ -1,3 +1,15 @@
+## [1.9.4] - 2026-10-19
+
+### Fixed
+
+- Wait for the `layout` service at apply time. On a fresh boot `ctx.get('layout')` can be a bare
+  proxy without `panelInfo`, which previously made the plugin return early and never mount the rail.
+- Keep the brand pill content-sized; the rail is visible again on startup.
+
+### Verified
+
+- `node scripts/check.mjs`: 27 checks green.
+
 # Changelog
 
 All notable changes to this project are documented in this file.

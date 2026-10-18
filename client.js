@@ -932,16 +932,20 @@ html[data-windows-titlebar] .BynINW_frame:not([data-dragging]):not([data-rightba
         openFeedback: () => actionButton(['意见反馈', 'Feedback'])?.click(),
         logout: () => actionButton(['退出登录', 'Log out', 'Sign out'])?.click(),
       }
-      ctx.effect(() => ctx.slots.register({
-        name: 'shell.overlay',
-        id: 'left-rail.overlay',
-        locale: NS,
-        inject: () => ({ actions }),
-      }, LeftRail), 'left-rail: overlay')
+      ctx.effect(() => {
+        return ctx.slots.inject('shell.overlay', () => {
+          return ctx.slots.register({
+            name: 'shell.overlay',
+            id: 'left-rail.overlay',
+            locale: NS,
+            inject: () => ({ actions }),
+          }, LeftRail)
+        })
+      }, 'left-rail: overlay')
     }
 
     return {
-      inject: ['slots', 'locale'],
+      inject: ['slots', 'locale', 'layout'],
       apply,
     }
   },

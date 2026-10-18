@@ -128,7 +128,10 @@ function scenario(options = {}) {
     },
     effect(factory) { factory(); return () => {} },
     locale: { register(ns, dicts) { locale = { ns, dicts }; return () => {} } },
-    slots: { register(options, component) { registrations.push({ options, component }); return () => {} } },
+    slots: {
+        register(options, component) { registrations.push({ options, component }); return () => {} },
+        inject(name, callback) { return callback() },
+      },
   }
   plugin.apply(ctx)
   const registration = registrations[0]
@@ -145,7 +148,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.9.3')
+  assert.equal(manifest.version, '1.9.4')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
