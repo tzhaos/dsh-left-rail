@@ -129,7 +129,7 @@ function scenario(options = {}) {
   const t = translator(locale.dicts.zh)
   const injected = registration.options.inject()
   const render = () => registration.component({ ...injected, t })
-  return { selected, setActive, settingsClicks, render, registration }
+  return { selected, setActive, settingsClicks, render, registration, injected }
 }
 
 function buttons(tree) {
@@ -139,7 +139,7 @@ function buttons(tree) {
 // Static contract
 await check('manifest declares a DSH bundle and web client half', () => {
   assert.equal(manifest.name, 'dsh-left-rail')
-  assert.equal(manifest.version, '1.2.0')
+  assert.equal(manifest.version, '1.3.0')
   assert.equal(manifest.license, 'MIT')
   assert.equal(manifest.main, 'index.js')
   assert.equal(manifest.exports['./client'], './client.js')
@@ -216,9 +216,16 @@ await check('active panel highlights the matching rail button', () => {
   assert(String(pluginButton.props.className).includes('dshlr-active'))
 })
 
-await check('settings button clicks the host settings control', () => {
+await check('settings menu exposes account, settings, feedback and logout', () => {
+  assert(clientSource.includes("'data-dshlr-menu-item': 'settings'"))
+  assert(clientSource.includes("'data-dshlr-menu-item': 'feedback'"))
+  assert(clientSource.includes("'data-dshlr-menu-item': 'logout'"))
+  assert(clientSource.includes("'rail.account'"))
+})
+
+await check('settings action clicks the host settings control', () => {
   const applied = scenario()
-  buttons(applied.render()).find((button) => button.props['data-dshlr-button'] === 'settings').props.onClick()
+  applied.injected.actions.openSettings()
   assert.equal(applied.settingsClicks.length, 1)
 })
 

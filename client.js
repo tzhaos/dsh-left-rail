@@ -23,6 +23,10 @@ window.__ModuleLoader__.load({
       'rail.automation': '自动化任务',
       'rail.plugins': '插件',
       'rail.settings': '设置',
+      'rail.account': '本地账号',
+      'rail.feedback': '意见反馈',
+      'rail.logout': '退出登录',
+      'rail.menu': '设置菜单',
       'rail.unavailable': '{name}面板未安装',
     }
 
@@ -31,6 +35,10 @@ window.__ModuleLoader__.load({
       'rail.automation': 'Automation',
       'rail.plugins': 'Plugins',
       'rail.settings': 'Settings',
+      'rail.account': 'Local account',
+      'rail.feedback': 'Feedback',
+      'rail.logout': 'Log out',
+      'rail.menu': 'Settings menu',
       'rail.unavailable': '{name} panel is not installed',
     }
 
@@ -117,6 +125,34 @@ window.__ModuleLoader__.load({
       return null
     }
 
+    /** @param {string[]} labels @returns {Element|null} first matching host button. */
+    function actionButton(labels) {
+      if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return null
+      for (const button of document.querySelectorAll('button[aria-label]')) {
+        if (button.closest?.('[data-dshlr-rail]') !== null && button.closest?.('[data-dshlr-rail]') !== undefined) continue
+        const label = button.getAttribute?.('aria-label') ?? ''
+        if (labels.some((candidate) => label === candidate || label.includes(candidate))) return button
+      }
+      return null
+    }
+
+    /** Read the host's existing account label/avatar when it is rendered on the right. */
+    function detectAccount() {
+      if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return { email: '', avatar: '' }
+      let email = ''
+      for (const node of document.querySelectorAll('span, div')) {
+        if (node.children?.length > 0) continue
+        const text = node.textContent?.trim() ?? ''
+        if (text.length <= 64 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) { email = text; break }
+      }
+      let avatar = ''
+      for (const image of document.querySelectorAll('img')) {
+        const src = image.getAttribute?.('src') ?? ''
+        if (src !== '') { avatar = src; break }
+      }
+      return { email, avatar }
+    }
+
     /**
      * One rail button.
      * @param {object} props - name, label, active, disabled, onClick and icons.
@@ -138,6 +174,29 @@ window.__ModuleLoader__.load({
     }
 
     /**
+     * Codex-style account/settings popover anchored beside the rail.
+     * @param {object} props - account, actions, translator and close callback.
+     * @returns {object} menu.
+     */
+    function SettingsMenu({ account, actions, t, onClose }) {
+      return h('div', { className: 'dshlr-menu', role: 'menu', 'aria-label': t('rail.menu') },
+        h('div', { className: 'dshlr-account' },
+          account.avatar === ''
+            ? h('span', { className: 'dshlr-avatar', 'aria-hidden': true }, h(Icon, { name: 'settings' }))
+            : h('img', { className: 'dshlr-avatar dshlr-avatar-image', src: account.avatar, alt: '' }),
+          h('span', { className: 'dshlr-account-text' },
+            h('span', { className: 'dshlr-account-name' }, account.email === '' ? t('rail.account') : account.email),
+            account.email === '' ? null : h('span', { className: 'dshlr-account-sub' }, t('rail.account')))),
+        h('span', { className: 'dshlr-menu-separator' }),
+        h('button', { type: 'button', className: 'dshlr-menu-item', role: 'menuitem', 'data-dshlr-menu-item': 'settings', onClick: () => { actions.openSettings(); onClose() } },
+          h(Icon, { name: 'settings' }), h('span', null, t('rail.settings'))),
+        h('button', { type: 'button', className: 'dshlr-menu-item', role: 'menuitem', 'data-dshlr-menu-item': 'feedback', onClick: () => { actions.openFeedback(); onClose() } },
+          h(Icon, { name: 'chat' }), h('span', null, t('rail.feedback'))),
+        h('button', { type: 'button', className: 'dshlr-menu-item', role: 'menuitem', 'data-dshlr-menu-item': 'logout', onClick: () => { actions.logout(); onClose() } },
+          h(Icon, { name: 'automation' }), h('span', null, t('rail.logout'))))
+    }
+
+    /**
      * The fixed left rail.
      * @param {object} props - injected navigation actions and translator.
      * @returns {object} rail.
@@ -145,6 +204,8 @@ window.__ModuleLoader__.load({
     function LeftRail({ actions, t }) {
       const [active, setActive] = useState(actions.activePanel())
       const [tip, setTip] = useState(null)
+      const [menuOpen, setMenuOpen] = useState(false)
+      const [account, setAccount] = useState({ email: '', avatar: '' })
       const tipRef = useRef(null)
       useEffect(() => actions.subscribe(setActive), [actions])
       useEffect(() => {
@@ -206,10 +267,15 @@ window.__ModuleLoader__.load({
         h(RailButton, {
           name: 'settings',
           label: t('rail.settings'),
-          active: false,
-          onClick: () => actions.openSettings(),
+          active: menuOpen,
+          onClick: () => {
+            setAccount(detectAccount())
+            setMenuOpen((open) => !open)
+            showTip(null)
+          },
           onTip: showTip,
         }),
+        menuOpen ? h(SettingsMenu, { account, actions, t, onClose: () => setMenuOpen(false) }) : null,
         tip === null ? null : h('div', { ref: tipRef, className: 'dshlr-tooltip', role: 'tooltip' }, tip.label))
     }
 
@@ -275,6 +341,60 @@ window.__ModuleLoader__.load({
   height: 18px;
 }
 .dshlr-glyph svg { display: block; }
+.dshlr-menu {
+  position: fixed;
+  left: 72px;
+  bottom: 12px;
+  z-index: 98;
+  width: 232px;
+  box-sizing: border-box;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-base);
+  border: 1px solid var(--dsw-alias-border-l2);
+  box-shadow: var(--dsw-elevation-soft);
+  color: var(--dsw-alias-label-primary);
+  -webkit-app-region: no-drag;
+}
+.dshlr-account {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 7px 9px;
+  min-width: 0;
+}
+.dshlr-avatar {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-secondary);
+}
+.dshlr-avatar-image { object-fit: cover; }
+.dshlr-account-text { display: flex; flex-direction: column; min-width: 0; }
+.dshlr-account-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dshlr-account-sub { font-size: 11px; color: var(--dsw-alias-label-tertiary); }
+.dshlr-menu-separator { display: block; height: 1px; margin: 2px 7px 6px; background: var(--dsw-alias-border-l2); }
+.dshlr-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  box-sizing: border-box;
+  padding: 7px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.dshlr-menu-item:hover { background: var(--dsw-alias-interactive-bg-hover); }
+.dshlr-menu-item .dshlr-glyph { width: 16px; height: 16px; color: var(--dsw-alias-label-secondary); }
 .dshlr-tooltip {
   position: fixed;
   left: 0;
@@ -309,6 +429,8 @@ window.__ModuleLoader__.load({
           if (layout.hasMainPanel(id)) layout.selectPanel(id)
         },
         openSettings: () => settingsButton()?.click(),
+        openFeedback: () => actionButton(['意见反馈', 'Feedback'])?.click(),
+        logout: () => actionButton(['退出登录', 'Log out', 'Sign out'])?.click(),
       }
       ctx.effect(() => ctx.slots.register({
         name: 'shell.overlay',

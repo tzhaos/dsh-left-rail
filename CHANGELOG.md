@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-10-19
+
+### Added
+
+- Clicking the rail settings icon opens an account/settings popover with the host avatar/email,
+  Settings, Feedback and Log out entries. Account and actions are read from the host DOM when present.
+
+### Verified
+
+- `node scripts/check.mjs`: 13 checks green.
+
 ## [1.2.0] - 2026-10-19
 
 ### Changed
